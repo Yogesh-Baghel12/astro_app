@@ -5,10 +5,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from rest_framework_simplejwt.tokens import RefreshToken
+# from ratelimit.decorators import ratelimit
 from .models import User, OTP
-from .serializers import SendOTPSerializer, VerifyOTPSerializer, UserSerializer, ProfileSerializer
+from .serializers import SendOTPSerializer, VerifyOTPSerializer, UserSerializer, ProfileSerializer, FocusAreaSerializer
 
 class SendOTPView(APIView):
+    # @ratelimit(key='post:phone_number', rate='3/m', method='POST', block=True)
     def post(self, request):
         serializer = SendOTPSerializer(data=request.data)
         if serializer.is_valid():
@@ -39,7 +41,7 @@ class VerifyOTPView(APIView):
                     return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
                 user, created = User.objects.get_or_create(
                     phone_number=phone_number,
-                    defaults={'username': phone_number, 'country_code': phone_number[:3]}
+                    defaults={'country_code': phone_number[:3]}
                 )
                 refresh = RefreshToken.for_user(user)
                 otp_record.delete()
@@ -52,11 +54,43 @@ class VerifyOTPView(APIView):
                 return Response({'error': 'No OTP found'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ProfileView(APIView):
+class FocusAreaView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        serializer = FocusAreaSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            serializer.update(user, serializer.validated_data)
+            return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        serializer = FocusAreaSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            serializer.update(user, serializer.validated_data)
+            return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ProfileView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        
+        user = request.user
+        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+
+    def post(self, request):
         serializer = ProfileSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            serializer.update(user, serializer.validated_data)
+            return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        serializer = ProfileSerializer(data=request.data, partial=True)
         if serializer.is_valid():
             user = request.user
             serializer.update(user, serializer.validated_data)

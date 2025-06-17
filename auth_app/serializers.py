@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, OTP
+from .models import User, OTP, FocusArea
 
 class SendOTPSerializer(serializers.Serializer):
     country_code = serializers.CharField(max_length=5, default='+91')
@@ -17,7 +17,7 @@ class VerifyOTPSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'phone_number', 'country_code', 'full_name', 'date_of_birth', 'time_of_birth', 'gender']
+        fields = ['id', 'phone_number', 'country_code', 'full_name', 'date_of_birth', 'time_of_birth', 'gender', 'focus_area']
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,4 +28,12 @@ class ProfileSerializer(serializers.ModelSerializer):
             'date_of_birth': {'required': True},
             'time_of_birth': {'required': True},
             'gender': {'required': True},
+        }
+
+class FocusAreaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['focus_area']
+        extra_kwargs = {
+            'focus_area': {'required': True},
         }
